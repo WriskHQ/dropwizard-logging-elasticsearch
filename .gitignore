@@ -1,0 +1,13 @@
+/.classpath
+/.project
+/.settings/
+*.xml.releaseBackup
+*.iml
+*.ipr
+*.iws
+target/
+classes/
+build/
+.idea/
+.gradle/
+.DS_Store
