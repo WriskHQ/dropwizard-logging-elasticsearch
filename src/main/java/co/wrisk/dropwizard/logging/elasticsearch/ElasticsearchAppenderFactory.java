@@ -52,6 +52,25 @@ public class ElasticsearchAppenderFactory<E extends DeferredProcessingAware> ext
     @JsonProperty
     private String index;
 
+    @NotNull
+    @JsonProperty
+    private String type;
+
+    @JsonProperty
+    private String loggerName;
+
+    @JsonProperty
+    private String errorLoggerName;
+
+    @JsonProperty
+    private boolean errorsToStderr;
+
+    @JsonProperty
+    private boolean logsToStderr;
+
+    @JsonProperty
+    private boolean includeCallerData;
+
     public String getUrl() {
         return url;
     }
@@ -66,6 +85,56 @@ public class ElasticsearchAppenderFactory<E extends DeferredProcessingAware> ext
 
     public void setIndex(String index) {
         this.index = index;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getLoggerName() {
+        return loggerName;
+    }
+
+    public void setLoggerName(String loggerName) {
+        this.loggerName = loggerName;
+    }
+
+    public String getErrorLoggerName() {
+        return errorLoggerName;
+    }
+
+    public void setErrorLoggerName(String errorLoggerName) {
+        this.errorLoggerName = errorLoggerName;
+    }
+
+    public boolean isErrorsToStderr() {
+        return errorsToStderr;
+    }
+
+    public void setErrorsToStderr(boolean errorsToStderr) {
+        this.errorsToStderr = errorsToStderr;
+    }
+
+    public boolean isLogsToStderr() {
+        return logsToStderr;
+    }
+
+    public void setLogsToStderr(boolean logsToStderr) {
+        this.logsToStderr = logsToStderr;
+    }
+
+    @Override
+    public boolean isIncludeCallerData() {
+        return includeCallerData;
+    }
+
+    @Override
+    public void setIncludeCallerData(boolean includeCallerData) {
+        this.includeCallerData = includeCallerData;
     }
 
     @SuppressWarnings("unchecked")
@@ -89,6 +158,13 @@ public class ElasticsearchAppenderFactory<E extends DeferredProcessingAware> ext
         appender.setContext(context);
         setUrl(appender);
         appender.setIndex(index);
+        appender.setType(type);
+        appender.setLoggerName(loggerName);
+        appender.setErrorLoggerName(errorLoggerName);
+        appender.setLogsToStderr(logsToStderr);
+        appender.setErrorsToStderr(errorsToStderr);
+        appender.setIncludeCallerData(includeCallerData);
+
         appender.addFilter(levelFilterFactory.build(threshold));
         appender.start();
 
