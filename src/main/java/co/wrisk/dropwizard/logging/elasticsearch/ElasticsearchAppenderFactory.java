@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.internetitem.logback.elasticsearch.AbstractElasticsearchAppender;
 import com.internetitem.logback.elasticsearch.ElasticsearchAccessAppender;
 import com.internetitem.logback.elasticsearch.ElasticsearchAppender;
+import com.internetitem.logback.elasticsearch.config.ElasticsearchProperties;
 import io.dropwizard.logging.AbstractAppenderFactory;
 import io.dropwizard.logging.async.AsyncAppenderFactory;
 import io.dropwizard.logging.filter.LevelFilterFactory;
@@ -54,7 +55,7 @@ public class ElasticsearchAppenderFactory<E extends DeferredProcessingAware> ext
 
     @NotNull
     @JsonProperty
-    private String type;
+    private String estype;
 
     @JsonProperty
     private String loggerName;
@@ -70,6 +71,9 @@ public class ElasticsearchAppenderFactory<E extends DeferredProcessingAware> ext
 
     @JsonProperty
     private boolean includeCallerData;
+
+    @JsonProperty
+    private ElasticsearchProperties properties;
 
     public String getUrl() {
         return url;
@@ -87,12 +91,12 @@ public class ElasticsearchAppenderFactory<E extends DeferredProcessingAware> ext
         this.index = index;
     }
 
-    public String getType() {
-        return type;
+    public String getEstype() {
+        return estype;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setEstype(String estype) {
+        this.estype = estype;
     }
 
     public String getLoggerName() {
@@ -137,6 +141,15 @@ public class ElasticsearchAppenderFactory<E extends DeferredProcessingAware> ext
         this.includeCallerData = includeCallerData;
     }
 
+
+    public ElasticsearchProperties getProperties() {
+        return properties;
+    }
+
+    public void setProperties(ElasticsearchProperties properties) {
+        this.properties = properties;
+    }
+
     @SuppressWarnings("unchecked")
     private AbstractElasticsearchAppender<E> elasticSearchAppender(LayoutFactory<E> layoutFactory) {
         AbstractElasticsearchAppender elasticsearchAppender;
@@ -158,12 +171,13 @@ public class ElasticsearchAppenderFactory<E extends DeferredProcessingAware> ext
         appender.setContext(context);
         setUrl(appender);
         appender.setIndex(index);
-        appender.setType(type);
+        appender.setType(estype);
         appender.setLoggerName(loggerName);
         appender.setErrorLoggerName(errorLoggerName);
         appender.setLogsToStderr(logsToStderr);
         appender.setErrorsToStderr(errorsToStderr);
         appender.setIncludeCallerData(includeCallerData);
+        appender.setProperties(properties);
 
         appender.addFilter(levelFilterFactory.build(threshold));
         appender.start();
