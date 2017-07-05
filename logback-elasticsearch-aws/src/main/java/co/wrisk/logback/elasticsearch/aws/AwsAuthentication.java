@@ -11,6 +11,7 @@ import com.internetitem.logback.elasticsearch.config.Authentication;
 
 import java.io.ByteArrayInputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URISyntaxException;
 
 public class AwsAuthentication implements Authentication {
@@ -27,20 +28,27 @@ public class AwsAuthentication implements Authentication {
 
 
         Request<?> request = new DefaultRequest<Void>(SERVICE_NAME);
-        request.setContent(new ByteArrayInputStream("".getBytes()));
+        request.setHttpMethod(HttpMethodName.fromValue(urlConnection.getRequestMethod()));
+        request.setContent(new ByteArrayInputStream(body.getBytes()));
+
         try {
-            request.setEndpoint(urlConnection.getURL().toURI());
+            URI uri = urlConnection.getURL().toURI();
+            request.setEndpoint(new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(), null, null, null));
+            request.setResourcePath(uri.getPath());
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
-        request.setHttpMethod(HttpMethodName.GET);
+
 
         // Sign request with supplied creds
         signer.sign(request, credsProvider.getCredentials());
 
-        urlConnection.setRequestProperty("host", request.getHeaders().get("Host"));
-        urlConnection.setRequestProperty("x-amz-date", request.getHeaders().get("X-Amz-Date"));
-        urlConnection.setRequestProperty("authorization", request.getHeaders().get("Authorization"));
+        String amzDate = request.getHeaders().get("X-Amz-Date");
+        if (amzDate != null) urlConnection.setRequestProperty("X-Amz-Date", amzDate);
+
+        String authorization = request.getHeaders().get("Authorization");
+        if (authorization != null) urlConnection.setRequestProperty("Authorization", authorization);
+
         String securityToken = request.getHeaders().get("x-amz-security-token");
         if (securityToken != null) urlConnection.setRequestProperty("x-amz-security-token", securityToken);
 
