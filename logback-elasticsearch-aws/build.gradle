@@ -1,0 +1,9 @@
+dependencies {
+    compile("com.internetitem:logback-elasticsearch-appender:$logbackElasticSearchVersion") {
+        exclude group: "ch.qos.logback"
+        exclude group: "com.fasterxml.jackson.core"
+    }
+    compile "com.amazonaws:aws-java-sdk-core:$awsSdkVersion"
+    testCompile "junit:junit:${junitVersion}"
+}
+

@@ -1,1 +1,4 @@
 rootProject.name = 'dropwizard-logging-elasticsearch'
+
+include 'logback-elasticsearch-aws'
+

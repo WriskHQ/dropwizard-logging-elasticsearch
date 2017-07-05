@@ -1,7 +1,4 @@
 plugins {
-    id 'java'
-    id 'maven'
-    id 'signing'
     id 'net.researchgate.release' version '2.6.0'
     id 'com.github.ben-manes.versions' version '0.15.0'
 }
@@ -12,55 +9,7 @@ ext {
     logbackExtrasVersion = '0.1.5'
     logbackVersion = '1.1.7'
     logbackElasticSearchVersion = '1.5'
-}
-
-group = 'co.wrisk.dropwizard'
-
-repositories {
-    mavenCentral()
-
-    maven {
-        url "https://oss.sonatype.org/content/repositories/snapshots"
-    }
-}
-
-
-compileJava {
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
-    options.deprecation = true
-}
-
-compileTestJava {
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
-    options.deprecation = true
-}
-dependencies {
-    compileOnly "io.dropwizard:dropwizard-logging:$dropwizardVersion"
-    compileOnly "io.dropwizard:dropwizard-request-logging:$dropwizardVersion"
-    compile ("com.internetitem:logback-elasticsearch-appender:$logbackElasticSearchVersion") {
-        exclude group: "ch.qos.logback"
-        exclude group: "com.fasterxml.jackson.core"
-    }
-    testCompile "junit:junit:${junitVersion}"
-}
-
-task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
-task javadocJar(type: Jar) {
-    classifier = 'javadoc'
-    from javadoc
-}
-artifacts {
-    archives javadocJar, sourcesJar
-}
-
-signing {
-    required { !version.contains("SNAPSHOT") }
-    sign configurations.archives
+    awsSdkVersion = '1.11.158'
 }
 
 task resolveDependencies {
@@ -81,54 +30,109 @@ task resolveDependencies {
     }
 }
 
-afterReleaseBuild.dependsOn uploadArchives
+allprojects {
 
-uploadArchives {
+    group = 'co.wrisk.dropwizard'
+
+    apply plugin: 'java'
+    apply plugin: 'maven'
+    apply plugin: 'signing'
 
     repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+        mavenCentral()
 
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
+        maven {
+            url "https://oss.sonatype.org/content/repositories/snapshots"
+        }
+    }
 
-            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
 
-            pom.project {
-                name 'Dropwizard component to enable elastic search log appender'
-                packaging 'jar'
-                // optionally artifactId can be defined here
-                description 'Dropwizard component to enable elastic search log appender'
-                url 'https://github.com/WriskHQ/dropwizard-logging-elasticsearch'
+    compileJava {
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
+        options.deprecation = true
+    }
 
-                scm {
-                    connection 'scm:git:git@github.com:WriskHQ/dropwizard-logging-elasticsearch.git'
-                    developerConnection 'scm:git:git@github.com:WriskHQ/dropwizard-logging-elasticsearch.git'
+    compileTestJava {
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
+        options.deprecation = true
+    }
+    dependencies {
+        compileOnly "io.dropwizard:dropwizard-logging:$dropwizardVersion"
+        compileOnly "io.dropwizard:dropwizard-request-logging:$dropwizardVersion"
+        compile("com.internetitem:logback-elasticsearch-appender:$logbackElasticSearchVersion") {
+            exclude group: "ch.qos.logback"
+            exclude group: "com.fasterxml.jackson.core"
+        }
+        testCompile "junit:junit:${junitVersion}"
+    }
+
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+    task javadocJar(type: Jar) {
+        classifier = 'javadoc'
+        from javadoc
+    }
+    artifacts {
+        archives javadocJar, sourcesJar
+    }
+
+    signing {
+        required { !version.contains("SNAPSHOT") }
+        sign configurations.archives
+    }
+
+
+    afterReleaseBuild.dependsOn uploadArchives
+
+    uploadArchives {
+
+        repositories {
+            mavenDeployer {
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+                repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                    authentication(userName: ossrhUsername, password: ossrhPassword)
+                }
+
+                snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                    authentication(userName: ossrhUsername, password: ossrhPassword)
+                }
+
+                pom.project {
+                    name 'Dropwizard component to enable elastic search log appender'
+                    packaging 'jar'
+                    // optionally artifactId can be defined here
+                    description 'Dropwizard component to enable elastic search log appender'
                     url 'https://github.com/WriskHQ/dropwizard-logging-elasticsearch'
-                }
 
-                licenses {
-                    license {
-                        name 'The MIT License (MIT)'
-                        url 'https://raw.githubusercontent.com/WriskHQ/dropwizard-logging-elasticsearch/master/LICENSE'
+                    scm {
+                        connection 'scm:git:git@github.com:WriskHQ/dropwizard-logging-elasticsearch.git'
+                        developerConnection 'scm:git:git@github.com:WriskHQ/dropwizard-logging-elasticsearch.git'
+                        url 'https://github.com/WriskHQ/dropwizard-logging-elasticsearch'
                     }
-                }
 
-                developers {
-                    developer {
-                        name 'Alex Harin'
-                        email 'alex@wrisk.co'
+                    licenses {
+                        license {
+                            name 'The MIT License (MIT)'
+                            url 'https://raw.githubusercontent.com/WriskHQ/dropwizard-logging-elasticsearch/master/LICENSE'
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            name 'Alex Harin'
+                            email 'alex@wrisk.co'
+                        }
                     }
                 }
             }
         }
     }
+
+
 }
-
-
-
-
 

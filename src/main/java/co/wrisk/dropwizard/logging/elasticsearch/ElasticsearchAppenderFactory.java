@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.internetitem.logback.elasticsearch.AbstractElasticsearchAppender;
 import com.internetitem.logback.elasticsearch.ElasticsearchAccessAppender;
 import com.internetitem.logback.elasticsearch.ElasticsearchAppender;
+import com.internetitem.logback.elasticsearch.config.Authentication;
 import com.internetitem.logback.elasticsearch.config.ElasticsearchProperties;
 import com.internetitem.logback.elasticsearch.config.Property;
 import io.dropwizard.logging.AbstractAppenderFactory;
@@ -74,6 +75,9 @@ public class ElasticsearchAppenderFactory<E extends DeferredProcessingAware> ext
     @JsonProperty
     private Map<String, String> properties;
 
+    @JsonProperty
+    private String authenticationClass;
+
     public String getUrl() {
         return url;
     }
@@ -138,6 +142,14 @@ public class ElasticsearchAppenderFactory<E extends DeferredProcessingAware> ext
         this.properties = properties;
     }
 
+    public String getAuthenticationClass() {
+        return authenticationClass;
+    }
+
+    public void setAuthenticationClass(String authenticationClass) {
+        this.authenticationClass = authenticationClass;
+    }
+
     @SuppressWarnings("unchecked")
     private AbstractElasticsearchAppender<E> elasticSearchAppender(LayoutFactory<E> layoutFactory) {
         AbstractElasticsearchAppender elasticsearchAppender;
@@ -171,6 +183,13 @@ public class ElasticsearchAppenderFactory<E extends DeferredProcessingAware> ext
             }
         }
         appender.setProperties(elasticsearchProperties);
+        if (authenticationClass != null) {
+            try {
+                appender.setAuthentication((Authentication) Class.forName(authenticationClass).newInstance());
+            } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
         appender.addFilter(levelFilterFactory.build(threshold));
         getFilterFactories().forEach(f -> appender.addFilter(f.build()));
