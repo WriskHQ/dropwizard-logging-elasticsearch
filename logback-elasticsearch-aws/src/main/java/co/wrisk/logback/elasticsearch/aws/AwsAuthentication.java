@@ -38,6 +38,7 @@ public class AwsAuthentication implements Authentication {
         // Sign request with supplied creds
         signer.sign(request, credsProvider.getCredentials());
 
+        urlConnection.setRequestProperty("Host", request.getHeaders().get("Host"));
         urlConnection.setRequestProperty("X-Amz-Date", request.getHeaders().get("X-Amz-Date"));
         urlConnection.setRequestProperty("Authorization", request.getHeaders().get("Authorization"));
         String securityToken = request.getHeaders().get("x-amz-security-token");
