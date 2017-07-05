@@ -154,7 +154,6 @@ public class ElasticsearchAppenderFactory<E extends DeferredProcessingAware> ext
                              LevelFilterFactory<E> levelFilterFactory, AsyncAppenderFactory<E> asyncAppenderFactory) {
         final AbstractElasticsearchAppender<E> appender = elasticSearchAppender(layoutFactory);
 
-
         appender.setName("elasticsearch-appender");
         appender.setContext(context);
         setUrl(appender);
@@ -174,6 +173,7 @@ public class ElasticsearchAppenderFactory<E extends DeferredProcessingAware> ext
         appender.setProperties(elasticsearchProperties);
 
         appender.addFilter(levelFilterFactory.build(threshold));
+        getFilterFactories().forEach(f -> appender.addFilter(f.build()));
         appender.start();
 
         return appender;
