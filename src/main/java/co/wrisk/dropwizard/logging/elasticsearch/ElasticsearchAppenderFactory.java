@@ -9,6 +9,7 @@ import com.internetitem.logback.elasticsearch.AbstractElasticsearchAppender;
 import com.internetitem.logback.elasticsearch.ElasticsearchAccessAppender;
 import com.internetitem.logback.elasticsearch.ElasticsearchAppender;
 import com.internetitem.logback.elasticsearch.config.ElasticsearchProperties;
+import com.internetitem.logback.elasticsearch.config.Property;
 import io.dropwizard.logging.AbstractAppenderFactory;
 import io.dropwizard.logging.async.AsyncAppenderFactory;
 import io.dropwizard.logging.filter.LevelFilterFactory;
@@ -17,6 +18,7 @@ import io.dropwizard.request.logging.layout.LogbackAccessRequestLayoutFactory;
 
 import javax.validation.constraints.NotNull;
 import java.net.MalformedURLException;
+import java.util.Map;
 
 /**
  * <p>An {@link io.dropwizard.logging.AppenderFactory} implementation which provides an appender that writes events to Elastic Search.</p>
@@ -70,10 +72,7 @@ public class ElasticsearchAppenderFactory<E extends DeferredProcessingAware> ext
     private boolean logsToStderr;
 
     @JsonProperty
-    private boolean includeCallerData;
-
-    @JsonProperty
-    private ElasticsearchProperties properties;
+    private Map<String, String> properties;
 
     public String getUrl() {
         return url;
@@ -131,22 +130,11 @@ public class ElasticsearchAppenderFactory<E extends DeferredProcessingAware> ext
         this.logsToStderr = logsToStderr;
     }
 
-    @Override
-    public boolean isIncludeCallerData() {
-        return includeCallerData;
-    }
-
-    @Override
-    public void setIncludeCallerData(boolean includeCallerData) {
-        this.includeCallerData = includeCallerData;
-    }
-
-
-    public ElasticsearchProperties getProperties() {
+    public Map<String, String> getProperties() {
         return properties;
     }
 
-    public void setProperties(ElasticsearchProperties properties) {
+    public void setProperties(Map<String, String> properties) {
         this.properties = properties;
     }
 
@@ -176,8 +164,14 @@ public class ElasticsearchAppenderFactory<E extends DeferredProcessingAware> ext
         appender.setErrorLoggerName(errorLoggerName);
         appender.setLogsToStderr(logsToStderr);
         appender.setErrorsToStderr(errorsToStderr);
-        appender.setIncludeCallerData(includeCallerData);
-        appender.setProperties(properties);
+        appender.setIncludeCallerData(isIncludeCallerData());
+        ElasticsearchProperties elasticsearchProperties = new ElasticsearchProperties();
+        if (properties != null) {
+            for (Map.Entry<String, String> entry : properties.entrySet()) {
+                elasticsearchProperties.addProperty(new Property(entry.getKey(), entry.getValue(), true));
+            }
+        }
+        appender.setProperties(elasticsearchProperties);
 
         appender.addFilter(levelFilterFactory.build(threshold));
         appender.start();
