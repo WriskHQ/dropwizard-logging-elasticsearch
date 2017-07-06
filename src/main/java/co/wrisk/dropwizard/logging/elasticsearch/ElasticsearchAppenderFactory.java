@@ -185,9 +185,8 @@ public class ElasticsearchAppenderFactory<E extends DeferredProcessingAware> ext
         appender.setProperties(elasticsearchProperties);
         if (authenticationClass != null) {
             try {
-                appender.setAuthentication((Authentication) ClassLoader.getSystemClassLoader().loadClass(authenticationClass).newInstance());
+                appender.setAuthentication((Authentication) Class.forName(authenticationClass).newInstance());
             } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-                e.printStackTrace();
                 throw new RuntimeException(e);
             }
         }
