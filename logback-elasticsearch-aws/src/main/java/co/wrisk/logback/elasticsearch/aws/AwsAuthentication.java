@@ -14,6 +14,8 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import static com.amazonaws.auth.internal.SignerConstants.*;
+
 public class AwsAuthentication implements Authentication {
 
     private static final String SERVICE_NAME = "es";
@@ -43,14 +45,14 @@ public class AwsAuthentication implements Authentication {
         // Sign request with supplied creds
         signer.sign(request, credsProvider.getCredentials());
 
-        String amzDate = request.getHeaders().get("X-Amz-Date");
-        if (amzDate != null) urlConnection.setRequestProperty("X-Amz-Date", amzDate);
+        String amzDate = request.getHeaders().get(X_AMZ_DATE);
+        if (amzDate != null) urlConnection.setRequestProperty(X_AMZ_DATE, amzDate);
 
-        String authorization = request.getHeaders().get("Authorization");
-        if (authorization != null) urlConnection.setRequestProperty("Authorization", authorization);
+        String authorization = request.getHeaders().get(AUTHORIZATION);
+        if (authorization != null) urlConnection.setRequestProperty(AUTHORIZATION, authorization);
 
-        String securityToken = request.getHeaders().get("x-amz-security-token");
-        if (securityToken != null) urlConnection.setRequestProperty("x-amz-security-token", securityToken);
+        String securityToken = request.getHeaders().get(X_AMZ_SECURITY_TOKEN);
+        if (securityToken != null) urlConnection.setRequestProperty(X_AMZ_SECURITY_TOKEN, securityToken);
 
     }
 }
