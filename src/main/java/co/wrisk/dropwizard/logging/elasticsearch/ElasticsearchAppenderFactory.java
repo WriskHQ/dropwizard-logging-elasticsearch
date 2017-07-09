@@ -5,6 +5,7 @@ import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.google.common.collect.ImmutableMap;
 import com.internetitem.logback.elasticsearch.AbstractElasticsearchAppender;
 import com.internetitem.logback.elasticsearch.ElasticsearchAccessAppender;
 import com.internetitem.logback.elasticsearch.ElasticsearchAppender;
@@ -15,6 +16,7 @@ import io.dropwizard.logging.AbstractAppenderFactory;
 import io.dropwizard.logging.async.AsyncAppenderFactory;
 import io.dropwizard.logging.filter.LevelFilterFactory;
 import io.dropwizard.logging.layout.LayoutFactory;
+import io.dropwizard.request.logging.layout.LogbackAccessRequestLayout;
 import io.dropwizard.request.logging.layout.LogbackAccessRequestLayoutFactory;
 
 import javax.validation.constraints.NotNull;
@@ -73,7 +75,7 @@ public class ElasticsearchAppenderFactory<E extends DeferredProcessingAware> ext
     private boolean logsToStderr;
 
     @JsonProperty
-    private Map<String, String> properties;
+    private Map<String, String> properties = ImmutableMap.of();
 
     @JsonProperty
     private String authenticationClass;
@@ -150,17 +152,6 @@ public class ElasticsearchAppenderFactory<E extends DeferredProcessingAware> ext
         this.authenticationClass = authenticationClass;
     }
 
-    @SuppressWarnings("unchecked")
-    private AbstractElasticsearchAppender<E> elasticSearchAppender(LayoutFactory<E> layoutFactory) {
-        AbstractElasticsearchAppender elasticsearchAppender;
-        if (layoutFactory instanceof LogbackAccessRequestLayoutFactory) {
-            elasticsearchAppender = new ElasticsearchAccessAppender();
-        } else {
-            elasticsearchAppender = new ElasticsearchAppender();
-        }
-        return elasticsearchAppender;
-    }
-
     @Override
     public Appender<E> build(LoggerContext context, String applicationName, LayoutFactory<E> layoutFactory,
                              LevelFilterFactory<E> levelFilterFactory, AsyncAppenderFactory<E> asyncAppenderFactory) {
@@ -176,13 +167,10 @@ public class ElasticsearchAppenderFactory<E extends DeferredProcessingAware> ext
         appender.setLogsToStderr(logsToStderr);
         appender.setErrorsToStderr(errorsToStderr);
         appender.setIncludeCallerData(isIncludeCallerData());
-        ElasticsearchProperties elasticsearchProperties = new ElasticsearchProperties();
-        if (properties != null) {
-            for (Map.Entry<String, String> entry : properties.entrySet()) {
-                elasticsearchProperties.addProperty(new Property(entry.getKey(), entry.getValue(), true));
-            }
-        }
+        ElasticsearchProperties elasticsearchProperties = elasticSearchProperties(context, layoutFactory);
+        properties.forEach((key, value) -> elasticsearchProperties.addProperty(new Property(key, value, true)));
         appender.setProperties(elasticsearchProperties);
+
         if (authenticationClass != null) {
             try {
                 appender.setAuthentication((Authentication) Class.forName(authenticationClass).newInstance());
@@ -197,6 +185,48 @@ public class ElasticsearchAppenderFactory<E extends DeferredProcessingAware> ext
 
         return appender;
     }
+
+    @SuppressWarnings("unchecked")
+    private AbstractElasticsearchAppender<E> elasticSearchAppender(LayoutFactory<E> layoutFactory) {
+        AbstractElasticsearchAppender elasticsearchAppender;
+        if (layoutFactory instanceof LogbackAccessRequestLayoutFactory) {
+            elasticsearchAppender = new ElasticsearchAccessAppender();
+        } else {
+            elasticsearchAppender = new ElasticsearchAppender();
+        }
+        return elasticsearchAppender;
+    }
+
+    private ElasticsearchProperties elasticSearchProperties(LoggerContext context, LayoutFactory<E> layoutFactory) {
+        ElasticsearchProperties elasticsearchProperties = new ElasticsearchProperties();
+        if (layoutFactory instanceof LogbackAccessRequestLayoutFactory) {
+            configureAccessLayout(context, elasticsearchProperties);
+        } else {
+            configureLayout(context, elasticsearchProperties);
+        }
+        return elasticsearchProperties;
+    }
+
+    private void configureAccessLayout(LoggerContext context, ElasticsearchProperties elasticsearchProperties) {
+        LogbackAccessRequestLayout accessRequestLayout = new LogbackAccessRequestLayout(context, getTimeZone());
+        elasticsearchProperties.addProperty(new Property("@message", accessRequestLayout.getPattern(), false));
+        elasticsearchProperties.addProperty(new Property("@fields.HOSTNAME", "%h", false));
+        elasticsearchProperties.addProperty(new Property("@fields.elapsed_time", "%D", false));
+        elasticsearchProperties.addProperty(new Property("@fields.requested_url", "%r", false));
+        elasticsearchProperties.addProperty(new Property("@fields.requested_uri", "%U", false));
+        elasticsearchProperties.addProperty(new Property("@fields.status_code", "%s", false));
+        elasticsearchProperties.addProperty(new Property("@fields.method", "%m", false));
+        elasticsearchProperties.addProperty(new Property("@fields.content_length", "%b", false));
+        elasticsearchProperties.addProperty(new Property("@fields.protocol", "%H", false));
+    }
+
+    private void configureLayout(LoggerContext context, ElasticsearchProperties elasticsearchProperties) {
+        elasticsearchProperties.addProperty(new Property("level", "%p", false));
+        elasticsearchProperties.addProperty(new Property("stack_trace", "%ex{full}", false));
+        elasticsearchProperties.addProperty(new Property("logger_name", "%logger", false));
+        elasticsearchProperties.addProperty(new Property("thread_name", "%t", false));
+    }
+
 
     private void setUrl(AbstractElasticsearchAppender<E> appender) {
         try {
